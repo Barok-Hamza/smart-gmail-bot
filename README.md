@@ -12,3 +12,6 @@ An AI-powered Gmail assistant that reads emails, categorizes them, and generates
 - Python
 - Gmail API
 - OpenAI API
+
+## Status
+Project setup completed successfully.
