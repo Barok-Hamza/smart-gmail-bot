@@ -4,15 +4,15 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
 creds = None
 
-# Load existing token if available
+# Load token
 if os.path.exists('token.json'):
     creds = Credentials.from_authorized_user_file('token.json', SCOPES)
 
-# If no valid credentials, log in again
+# Login if needed
 if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
@@ -23,15 +23,45 @@ if not creds or not creds.valid:
         )
         creds = flow.run_local_server(port=0)
 
-    # Save token
     with open('token.json', 'w') as token:
         token.write(creds.to_json())
 
 # Build Gmail service
 service = build('gmail', 'v1', credentials=creds)
 
-# Get Gmail profile
-profile = service.users().getProfile(userId='me').execute()
+print("Connected to Gmail!")
 
-print("Connected to Gmail successfully!")
-print("Email Address:", profile['emailAddress'])
+# Labels we want
+labels_to_create = [
+    "Jobs",
+    "School",
+    "Priority",
+    "Internships"
+]
+
+# Get existing labels
+results = service.users().labels().list(userId='me').execute()
+existing_labels = results.get('labels', [])
+
+existing_label_names = [label['name'] for label in existing_labels]
+
+# Create labels if they don't exist
+for label_name in labels_to_create:
+
+    if label_name not in existing_label_names:
+
+        label_object = {
+            'name': label_name,
+            'labelListVisibility': 'labelShow',
+            'messageListVisibility': 'show'
+        }
+
+        service.users().labels().create(
+            userId='me',
+            body=label_object
+        ).execute()
+
+        print(f"Created label: {label_name}")
+
+    else:
+        print(f"Label already exists: {label_name}")
